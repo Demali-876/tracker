@@ -165,24 +165,24 @@ server.on("connection", (socket) => {
       const peer = `${socket.remoteAddress}:${socket.remotePort}`;
       const ts = new Date().toISOString();
 
-    const pkt = parseFrame(frame);
-    if (!pkt) {
-    logUnparsed(peer, frame); return;
-    }
-    logParsed(peer, pkt);
-    console.log(
-    `[${ts}] PARSED (${peer}) IMEI=${pkt.imei} ` +
-    `lat=${isFinite(pkt.lat) ? pkt.lat.toFixed(6) : "NaN"} ` +
-    `lon=${isFinite(pkt.lon) ? pkt.lon.toFixed(6) : "NaN"} ` +
-    `speed(kn)=${pkt.speed_knots} dir=${pkt.direction_deg} valid=${pkt.valid}`
-    );
+      const pkt = parseFrame(frame);
+      if (!pkt) {
+        logUnparsed(peer, frame);
+        return;
+      }
+      logParsed(peer, pkt);
+      console.log(
+        `[${ts}] PARSED (${peer}) IMEI=${pkt.imei} ` +
+          `lat=${isFinite(pkt.lat) ? pkt.lat.toFixed(6) : "NaN"} ` +
+          `lon=${isFinite(pkt.lon) ? pkt.lon.toFixed(6) : "NaN"} ` +
+          `speed(kn)=${pkt.speed_knots} dir=${pkt.direction_deg} valid=${pkt.valid}`
+      );
 
-    if (SEND_ACK && pkt.imei) {
-      const ack = buildAckR12(pkt.manufacturer, pkt.imei);
-      socket.write(ack);
-      logAck(peer, ack);
-    }
-
+      if (SEND_ACK && pkt.imei) {
+        const ack = buildAckR12(pkt.manufacturer, pkt.imei);
+        socket.write(ack);
+        logAck(peer, ack);
+      }
     });
   });
 
@@ -190,6 +190,17 @@ server.on("connection", (socket) => {
   socket.on("error", (e) => console.error(`ERROR (${peer})`, (e as Error).message));
 });
 
-server.listen(PORT, () => {
-  console.log(`LISTENING on port ${PORT}`);
-});
+server.listen(
+  {
+    host: "0.0.0.0",
+    port: PORT,
+    // Fly allocates both IPv4 and IPv6 addresses. Listening on 0.0.0.0 keeps the
+    // server reachable from the IPv4 address and still allows IPv6 connections
+    // thanks to the default dual-stack behaviour.
+    // See https://fly.io/docs/about/ports-and-services/#listening-on-0-0-0-0
+    ipv6Only: false
+  },
+  () => {
+    console.log(`LISTENING on port ${PORT}`);
+  }
+);

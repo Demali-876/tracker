@@ -8,7 +8,7 @@ primary_region = 'ewr'
 [[services]]
   protocol = 'tcp'
   internal_port = 5001
-  
+
   [[services.ports]]
     port = 5001
 
